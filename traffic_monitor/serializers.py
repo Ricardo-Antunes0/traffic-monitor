@@ -1,13 +1,13 @@
 from rest_framework import serializers
-from .models import RoadSegment, speed_readings
+from .models import RoadSegment, SpeedReading
 
 
 class SpeedReadingSerializer(serializers.ModelSerializer):
 
     """
-    Serializer para o modelo SpeedReading (leituras de velocidade).
+    Serializer para leituras de velocidade.
     
-    Converte o objeto Python em JSON e vice-versa.
+    Responsável por Converter objetos SpeedReading em JSON e vice-versa.
     Para alem disso, também é adicionado o campo intensidade.
     """
 
@@ -30,22 +30,20 @@ class SpeedReadingSerializer(serializers.ModelSerializer):
 class RoadSegmentSerializer(serializers.ModelSerializer):
     
     """
-    Serializer para o modelo RoadSegment (segmentos de estrada).
+    Serializer do segmentos de estrada.
     
-    Inclui:
-    - Todos os campos do segmento
-    - total_readings: o número total de leituras feitas
-    - latest_reading: a última leitura
+    Para além dos campos do modelo, inclui também:
+    - total_readings: número de leituras associadas
+    - latest_reading: a leitura mais recente
     """
 
-    # Estes 2 campos vão ser obtidos através de métodos definidos em baixo
-    total_readings = serializers.serializerMethodField()
-    latest_reading = serializers.serializerMethodField()
+    total_readings = serializers.SerializerMethodField()
+    latest_reading = serializers.SerializerMethodField()
 
     class Meta:
         model = RoadSegment
         fields = [
-              'id',
+            'id',
             'longitude_start',      # Longitude inicial
             'latitude_start',       # Latitude inicial
             'longitude_end',        # Longitude final
@@ -59,13 +57,8 @@ class RoadSegmentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_total_readings(self, obj):
-        
         """
         Devolve o número total de leituras associadas a este segmento.
-        
-        obj = instância de RoadSegment
-        obj.readings = todas as leituras de um determinado segmento
-        readings é o related_name que dei quando defini o road_segment como FK
         """
         return obj.readings.count()
 
@@ -73,8 +66,7 @@ class RoadSegmentSerializer(serializers.ModelSerializer):
     def get_latest_reading(self, obj):
         """
         Devolve a leitura mais recente deste segmento.
-        Como a tabela está a ser ordenada do mais recente para o mais antigo então basta fazer: obj.readings.first()
-        Se não houver leituras, retorna None.
+        Se não existirem leituras, retorna None.
         """
         latest = obj.readings.first()
         if latest:
@@ -82,7 +74,30 @@ class RoadSegmentSerializer(serializers.ModelSerializer):
             return SpeedReadingSerializer(latest).data
         return None
 
-    
 
-
+class RoadSegmentListSerializer(serializers.ModelSerializer):
+    """
+    Serializer + simples para facilitar a listagem de segmentos.
     
+    Será utilizado no endpoint GET /api/segments/ (lista)
+    Não inclui latest_reading para reduzir a quantidade de dados a serem devolvidos.
+    """
+    total_readings = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = RoadSegment
+        fields = [
+            'id',
+            'longitude_start',
+            'latitude_start',
+            'longitude_end',
+            'latitude_end',
+            'length',
+            'total_readings'
+        ]
+    
+    def get_total_readings(self, obj):
+        """
+        Devolve o número de leituras de velocidade do segmento.
+        """
+        return obj.readings.count()

@@ -39,9 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_filters',
-    'drf_spectacular',
-    # A aplicação
-    'traffic_monitor'
+    'drf_spectacular',          # Documentação
+    'traffic_monitor',          # A aplicação
+    'rest_framework.authtoken'  # token para autenticação
 ]
 
 MIDDLEWARE = [
@@ -129,6 +129,10 @@ STATIC_URL = 'static/'
 # Django Rest Framework
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        #'rest_framework.authentication.SessionAuthentication',
+    ],
 }
 
 # Swagger / Spectacular (Documentação da API)
