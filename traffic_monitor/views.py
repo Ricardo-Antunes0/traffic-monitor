@@ -7,11 +7,22 @@ from .serializers import (
     RoadSegmentListSerializer,
     SpeedReadingSerializer)
 from .permissions import IsAdminOrReadOnly
+from django.db.models import OuterRef, Subquery
 
 @extend_schema_view(
     list=extend_schema(
         summary="Listar todos os segmentos de estrada",
-        description="Retorna uma lista de todos os segmentos de estrada, incluindo o número total de leituras associadas.",
+        description="Retorna uma lista de todos os segmentos de estrada, incluindo o número total de leituras associadas. Pode filtrar por intensidade.",
+        parameters=[
+            OpenApiParameter(
+                name='intensity',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filtrar por intensidade: elevada, média ou baixa',
+                required=False,
+                enum=['elevada', 'média', 'baixa']
+            )
+        ],
         tags=["Segmentos de Estrada"]
     ),
     retrieve=extend_schema(
@@ -75,6 +86,46 @@ class RoadSegmentViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return RoadSegmentListSerializer
         return RoadSegmentSerializer
+
+    def get_queryset(self):
+        """
+        Personalizar o queryset para permitir filtragem por intensidade.
+        
+        Filtragem por intensidade da última leitura:
+            - GET /api/segments/?intensity=elevada
+            - GET /api/segments/?intensity=média
+            - GET /api/segments/?intensity=baixa
+
+        Como funciona:
+            1. Captura o parâmetro intensity da URL
+            2. Converte a intensidade em intervalo de velocidade
+            3. Filtra os segmentos cuja última leitura está nesse intervalo
+        """
+    
+        queryset = super().get_queryset() # Começamos com todos os segmentos
+        intensity = self.request.query_params.get('intensity', None) # Tentar obter o parâmetro intensity da URL
+        
+        if intensity:
+            intensity = intensity.lower().replace('é','e')
+            # Subquery: Obter a velocidade da última leitura de cada segmento
+            latest_reading_subquery = SpeedReading.objects.filter(road_segment=OuterRef('pk')).order_by('-timestamp').values('average_speed')[:1]
+            
+            # Anotamos em cada segmento a velocidade da última leitura (é um campo temporário)
+            queryset = queryset.annotate(latest_speed=Subquery(latest_reading_subquery))
+            
+            # Filtrar os segmentos onde a última leitura tem a intensidade pretendida
+            if intensity == 'elevada':
+                queryset = queryset.filter(latest_speed__lte=20)
+
+            elif intensity == 'media':
+                queryset = queryset.filter(
+                    latest_speed__gt=20,
+                    latest_speed__lte=50)
+            elif intensity == 'baixa':
+                queryset = queryset.filter(latest_speed__gt=50)
+            else:
+                return queryset.none()
+        return queryset
 
 
 @extend_schema_view(
