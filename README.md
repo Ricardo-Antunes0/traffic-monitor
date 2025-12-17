@@ -4,6 +4,9 @@
 API REST para monitorização de tráfego rodoviário, desenvolvida com Django Rest Framework.
 
 Este projeto foi desenvolvido como exercício técnico para a Ubiwhere.
+
+Foram feitas as partes 1 e 2 do exercício.
+
 ## Descrição
 
 Esta API permite gerir segmentos de estrada e leituras de velocidade média, calculando automaticamente a intensidade do tráfego com base na velocidade registada.
@@ -18,14 +21,14 @@ Esta API permite gerir segmentos de estrada e leituras de velocidade média, cal
 
 ## Funcionalidades
 
-- ✅ CRUD completo para segmentos de estrada
-- ✅ CRUD completo para leituras de velocidade
-- ✅ Cálculo automático da intensidade do tráfego
-- ✅ Sistema de permissões (Admin vs Anónimo)
-- ✅ Autenticação por Token
-- ✅ Documentação através do Swagger
-- ✅ Filtros por segmento de estrada
-- ✅ Contador de leituras por segmento
+- CRUD completo para segmentos de estrada
+- CRUD completo para leituras de velocidade
+- Cálculo automático da intensidade do tráfego
+- Sistema de permissões (Admin vs Anónimo)
+- Autenticação por Token
+- Documentação através do Swagger
+- Filtros por segmento de estrada
+- Contador de leituras por segmento
 
 ## Tecnologias
 
@@ -211,9 +214,22 @@ curl -X POST http://127.0.0.1:8000/api/readings/ \
   }'
 ```
 
-## Testes
+## Testes Unitários
 
-Para executar os testes (Parte 2 - opcional):
+Foram implementados os seguintes testes unitários:
+- **Modelos:**
+  - Criação de segmentos e leituras
+  - Cálculo da intensidade do tráfego
+  - Relações FK entre segmentos e leituras
+- **Permissões:**
+  - Verificação de acesso para utilizadores anónimos (apenas GET)
+  - Verificação de acesso para administradores (CRUD completo)
+- **Endpoints da API:**
+  - Listagem de segmentos e leituras
+  - Detalhes de um segmento, incluindo última leitura e total de leituras
+  - Filtros por intensidade
+
+Para executar os testes:
 
 ```bash
 python manage.py test
@@ -226,11 +242,12 @@ traffic-monitor/
 ├── config/                 # Configurações do Django
 │   ├── settings.py
 │   └── urls.py
-├── traffic_monitor/        # App principal
+├── traffic_monitor/       # App principal
 │   ├── models.py          # Models (RoadSegment, SpeedReading)
 │   ├── serializers.py     # Serializers DRF
+│   ├── tests.py           # Testes unitários
 │   ├── views.py           # ViewSets
-│   ├── permissions.py     # Permissões customizadas
+│   ├── permissions.py     # Permissões personalizadas
 │   ├── urls.py            # URLs da app
 │   └── management/
 │       └── commands/
